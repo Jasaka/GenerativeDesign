@@ -93,7 +93,7 @@ Enthält alle CSS Variabeln und grundlegende Regeln.
     --fw-bold: 500;
 
     /* Line Heights */
-    --lh-tight: 100%;
+    --lh-tight: 110%;
     --lh-medium: 130%;
     --lh-loose: 150%;
 }
