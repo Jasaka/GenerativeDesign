@@ -49,6 +49,8 @@ Enthält alle Regeln zu Module.
 
 .m-portfolioItem-image{
   margin-bottom: var(--m);
+  border: solid 1rem;
+  border-color: var(--color-headlines);
 }
 
 

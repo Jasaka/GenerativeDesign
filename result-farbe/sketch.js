@@ -12,96 +12,97 @@ https://cnoss.github.io/generative-gestaltung/
 
 
 let saveParams = {
-  sketchName: 'gg-startercode'
+    sketchName: "gg-sketch"
 }
-
 
 // Params for canvas
 let canvasParams = {
-  holder: document.getElementById('canvas'),
-  state: false,
-  mouseX: false,
-  mouseY: false,
-  mouseLock: false,
-  background: 0,
-  gui: true,
-  mode: 'canvas', // canvas, svg or WEBGL - svg mode is experimental 
+    holder: document.getElementById("canvas"),
+    state: false,
+    mouseX: false,
+    mouseY: false,
+    background: 0,
+    gui: true
 };
 getCanvasHolderSize();
 
-// Params for the drawing
-let drawingParams = {
-  gridSize: 20,
-  gridSizeMax: 100,
-  gridSizeMin: 5,
-  gridSizeStep: 5,
-  gridAlpha: 20,
-
-  strokeWeight: 1,
-  strokeAlpha: 50,
-  lines: 10,
-  innerRadius1: 40,
-  outerRadius1: 120,
-  innerRadius2: 40,
-  outerRadius2: 120,
-  padding: 20,
-  hueStart: 0,
-  hueStartMax: 360,
-
-  hueEnd: 360,
-  hueEndMax: 360,
-
-};
-
 // Params for logging
 let loggingParams = {
-  targetDrawingParams: document.getElementById('drawingParams'),
-  targetCanvasParams: document.getElementById('canvasParams'),
-  state: false
+    targetDrawingParams: document.getElementById("drawingParams"),
+    targetCanvasParams: document.getElementById("canvasParams"),
+    state: false
 };
 
-let areas = [];
-
-let innerRadius = 0;
-let innerIncrement = 0.7;
-let innerIncrementDirection = 1;
-
-
 /* ###########################################################################
-Classes
+Globals
 ############################################################################ */
-
+let halfWidth, halfHeight, amountOfInitializedDots;
+let dots = [];
+let backgroundRedrawable = drawingParams.redrawBackground;
 
 /* ###########################################################################
 Custom Functions
 ############################################################################ */
-
-function drawGrid() { 
-
-  push();
-  translate(width/2, height/2);
-  let maxDimension = (width / height > 1) ? width : height;
-  let halfWidth = width / 2;
-  let halfheight= width / 2;
-  let steps = maxDimension * 0.5 / drawingParams.gridSize;
-
-  stroke(0, 0, 0, drawingParams.gridAlpha);
-
-  for (i = 0; i <= steps; i++) { 
-    let weight = (i % 10 === 0) ? 0.5 : 0.2;
-    strokeWeight(weight);
-    let positive  = (i * drawingParams.gridSize);
-    let negative = -positive ;
-    line(positive, -halfheight, positive, halfheight);
-    line(negative, -halfheight, negative, halfheight);
-    line(-halfWidth, positive, halfWidth, positive);
-    line(-halfWidth, negative, halfWidth, negative);
-  }
-  pop();
-
+function initializeDots(amountOfDots) {
+    let angleUnit = 360 / elementParams.dotAmount;
+    let radius = halfHeight - elementParams.dotSize;
+    drawBackground();
+    dots = [];
+    for (let i = 0; i < amountOfDots; i++) {
+        let addedHueValue = 360 / elementParams.dotAmount;
+        if (elementParams.circleInitiation) {
+            let x = halfWidth + cos(i * angleUnit) * radius;
+            let y = halfHeight + sin(i * angleUnit) * radius;
+            dots[dots.length] = new Dot(x, y, elementParams.dotSize, safeHSBAShift("HUE", drawingParams.hueValue, addedHueValue * i), drawingParams.saturationValue, drawingParams.brightnessValue, drawingParams.alphaValue);
+        } else {
+            let initiationOffset = elementParams.dotSize;
+            dots[dots.length] = new Dot(random(initiationOffset, canvasParams.w - initiationOffset), random(initiationOffset, canvasParams.h - initiationOffset), elementParams.dotSize, safeHSBAShift("HUE", drawingParams.hueValue, addedHueValue * i), drawingParams.saturationValue, drawingParams.brightnessValue, drawingParams.alphaValue);
+            }
+    }
+    this.amountOfInitializedDots = amountOfDots;
 }
 
+function setBlendMode() {
+    switch (drawingParams.blendMode) {
+        case "BLEND":
+            blendMode(BLEND);
+            break;
+        case "MULTIPLY":
+            blendMode(MULTIPLY);
+            break;
+        case "ADD":
+            blendMode(ADD);
+            break;
+        case "DIFFERENCE":
+            blendMode(DIFFERENCE);
+            break;
+        case "SCREEN":
+            blendMode(SCREEN);
+            break;
+        case "OVERLAY":
+            blendMode(OVERLAY);
+            break;
+        default:
+            break;
+    }
+}
 
+function drawBackground() {
+    let bgColor = getColor({
+        "hue": 0,
+        "saturation": 0,
+        "brightness": drawingParams.bgValue,
+        "alpha": map(drawingParams.bgAlpha, 0, 100, 0, 1)
+    });
+    background(bgColor);
+}
+
+function setFill(fillColor) {
+    stroke(fillColor);
+    if (elementParams.noFill) {
+        noFill();
+    } else fill(fillColor);
+}
 
 /* ###########################################################################
 P5 Functions
@@ -109,188 +110,85 @@ P5 Functions
 
 
 function setup() {
-  
-  let canvas;
-  if (canvasParams.mode === 'svg') {
-    canvas = createCanvas(canvasParams.w, canvasParams.h, SVG);
-  } else if (canvasParams.mode === 'WEBGL') { 
-    canvas = createCanvas(canvasParams.w, canvasParams.h, WEBGL);
+
+    let canvas = createCanvas(canvasParams.w, canvasParams.h);
     canvas.parent("canvas");
-  } else { 
-    canvas = createCanvas(canvasParams.w, canvasParams.h);
-    canvas.parent("canvas");
-  }
 
-  // Display & Render Options
-  // frameRate(25);
-  angleMode(DEGREES);
-  smooth();
-  // colorMode(HSB, 360, 100, 100, 100);
+    // Display & Render Options
+    frameRate(20);
+    angleMode(DEGREES);
+    colorMode(HSB, 360, 100, 100, 1);
+    smooth();
 
-  // GUI Management
-  if (canvasParams.gui) { 
-    let sketchGUI = createGui('Params');
-    sketchGUI.addObject(drawingParams);
-    //noLoop();
-  }
+    // GUI Management
+    if (canvasParams.gui) {
+        let sketchGUI = createGui('Canvas Parameters');
+        sketchGUI.addObject(drawingParams);
+        let elementGUI = createGui('Element Parameters');
+        elementGUI.addObject(elementParams);
+        elementGUI.setPosition(windowWidth - 300, 20);
+    }
 
-  // Anything else
-  fill(0);
-  // noStroke();
-  stroke(0,0,90,5);
-  strokeWeight(0.5);
-  ellipseMode(CENTER);
-
-  colorMode(HSB, 360, 100, 100, 100);
-  
+    // Anything else
+    //fill(0, 150);
+    halfWidth = width / 2;
+    halfHeight = height / 2;
+    fill(getColor());
+    stroke(getColor());
+    strokeWeight(0);
+    background(drawingParams.bgValue);
+    setBlendMode(drawingParams.blendMode);
+    this.dots = [];
+    initializeDots(elementParams.dotAmount);
 }
-
 
 
 function draw() {
 
-  /* ----------------------------------------------------------------------- */
-  // Log globals
-  if (!canvasParams.mouseLock) {
-    canvasParams.mouseX = mouseX;
-    canvasParams.mouseY = mouseY;
-    logInfo();
-  }
-
-  /* ----------------------------------------------------------------------- */
-  // Provide your Code below
-  background(0);
-  stroke(255);
-  fill(255);
-  translate(width / 2, height / 2);
-
-  strokeWeight(drawingParams.strokeWeight);
-  
-  let angleSteps = 360 / drawingParams.lines;
-  
-  innerRadius = innerRadius + (innerIncrement * innerIncrementDirection);
-  if (innerRadius > width) { innerIncrementDirection = -1; }
-  if (innerRadius < -width ) { innerIncrementDirection = 1; }
-
-  for (let angle = 0; angle <= 360; angle += angleSteps) { 
-    let x1 = cos(angle) * innerRadius;
-    let y1 = sin(angle) * drawingParams.innerRadius2;
-
-    let x2 = cos(angle) * drawingParams.outerRadius1;
-    let y2 = sin(angle) * drawingParams.outerRadius2;
-
-    let hue = map(angle, 0, 360, drawingParams.hueStart, drawingParams.hueEnd);
-    stroke(hue, 100, 100, drawingParams.strokeAlpha);
-    
-    line(x1, y1, x2, y2);
-  }
-}
-
-
-
-function keyPressed() {
-
-  if (keyCode === 81) { // Q-Key
-  }
-
-  if (keyCode === 87) { // W-Key
-  }
-
-  if (keyCode === 89) { // Y-Key
-  }
-
-  if (keyCode === 88) { // X-Key
-  }
-
-  if (keyCode === 83) { // S-Key
-
-    let suffix = (canvasParams.mode === "svg") ? '.svg' : '.png';
-    let fragments = location.href.split(/\//).reverse().filter(fragment => {
-      return (fragment.match !== 'index.html' && fragment.length > 2) ? fragment : false;
-    });
-    let suggestion = fragments.shift();
-  
-    let fn = prompt(`Filename for ${suffix}`, suggestion);
-    save(fn + suffix);
-  }
-
-  if (keyCode === 49) { // 1-Key
-  }
-
-  if (keyCode === 50) { // 2-Key
-  }
-
-  if (keyCode === 76) { // L-Key
-    if (!canvasParams.mouseLock) {
-      canvasParams.mouseLock = true;
-    } else { 
-      canvasParams.mouseLock = false;
+    /* ----------------------------------------------------------------------- */
+    // Provide your Code below.
+    setBlendMode(drawingParams.blendMode);
+    halfWidth = width / 2;
+    halfHeight = height / 2;
+    if (elementParams.linearMovement) {
+        backgroundRedrawable = true;
     }
-    document.getElementById("canvas").classList.toggle("mouseLockActive");
-  }
+    if (backgroundRedrawable) {
+        if (drawingParams.redrawBackground) {
+            if (elementParams.linearMovement === false) {
+                backgroundRedrawable = false;
+            }
+            drawBackground();
+        }
+    }
+    strokeWeight(elementParams.strokeWeight);
+    if (this.amountOfInitializedDots !== elementParams.dotAmount) {
+        initializeDots(elementParams.dotAmount);
+        background(0, 1);
+    }
+    if (elementParams.linearMovement) {
+        for (let i = 0; i < dots.length; i++) {
+            if (elementParams.iterateOverColors) {
+                dots[i].setColor(5);
+            }
+            dots[i].move(i);
+        }
+        loop();
 
-
+    } else {
+        for (let i = 0; i < dots.length; i++) {
+            if (elementParams.iterateOverColors) {
+                dots[i].setColor(5);
+            }
+            dots[i].drawDot();
+        }
+        noLoop();
+    }
+    /* ----------------------------------------------------------------------- */
+    // Log globals
+    if (loggingParams) {
+        canvasParams.mouseX = mouseX;
+        canvasParams.mouseY = mouseY;
+        logInfo();
+    }
 }
-
-
-
-function mousePressed() {
-}
-
-
-
-function mouseReleased() {
-}
-
-
-
-function mouseDragged() {}
-
-
-
-function keyReleased() {
-  if (keyCode == DELETE || keyCode == BACKSPACE) clear();
-}
-
-
-
-
-
-/* ###########################################################################
-Service Functions
-############################################################################ */
-
-
-
-function getCanvasHolderSize() {
-  canvasParams.w = canvasParams.holder.clientWidth;
-  canvasParams.h = canvasParams.holder.clientHeight;
-}
-
-
-
-function resizeMyCanvas() {
-  getCanvasHolderSize();
-  resizeCanvas(canvasParams.w, canvasParams.h);
-}
-
-
-
-function windowResized() {
-  resizeMyCanvas();
-}
-
-
-
-function logInfo(content) {
-
-  if (loggingParams.targetDrawingParams) {
-    loggingParams.targetDrawingParams.innerHTML = helperPrettifyLogs(drawingParams);
-  }
-
-  if (loggingParams.targetCanvasParams) {
-    loggingParams.targetCanvasParams.innerHTML = helperPrettifyLogs(canvasParams);
-  }
-
-}
-

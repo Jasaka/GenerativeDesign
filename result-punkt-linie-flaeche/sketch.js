@@ -12,191 +12,156 @@ https://cnoss.github.io/generative-gestaltung/
 
 
 let saveParams = {
-  sketchName: "gg-sketch"
+    sketchName: "gg-sketch"
 }
 
 
 // Params for canvas
 let canvasParams = {
-  holder: document.getElementById("canvas"),
-  state: false,
-  mouseX: false,
-  mouseY: false,
-  background: 0,
-  gui: false
+    holder: document.getElementById("canvas"),
+    state: false,
+    mouseX: false,
+    mouseY: false,
+    background: 0,
+    gui: true
 };
 getCanvasHolderSize();
 
-// Params for the drawing
-let drawingParams = {
-  size: 20,
-  backgroundColor: 50,
-  backgroundColorMax: 255
-};
-
 // Params for logging
 let loggingParams = {
-  targetDrawingParams: document.getElementById("drawingParams"),
-  targetCanvasParams: document.getElementById("canvasParams"),
-  state: false
+    targetDrawingParams: document.getElementById("drawingParams"),
+    targetCanvasParams: document.getElementById("canvasParams"),
+    state: false
 };
-
-
-
 
 
 /* ###########################################################################
-Classes
+Globals
 ############################################################################ */
-
-
-
+let particle;
+let particles = [];
 
 
 /* ###########################################################################
 Custom Functions
 ############################################################################ */
 
+function initializeParticles() {
+    particles = [];
+    for (let i = 0; i < drawingParams.particleAmount; i++) {
+        particles[i] = new Particle(random(0, canvasParams.w), random(0, canvasParams.h));
+    }
+}
 
+function checkParticleToParticleConnections() {
+    for (let i = 0; i < drawingParams.particleAmount; i++) {
+        for (let j = 1; j < drawingParams.particleAmount; j++) {
+            if (dist(particles[i].x, particles[i].y, particles[j].x, particles[j].y) < drawingParams.connectionDistance) {
+                stroke(getColor());
+                strokeWeight(1);
+                line(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+            }
+        }
+    }
+}
 
+function checkMouseToParticleConnections() {
+    for (let i = 0; i < drawingParams.particleAmount; i++) {
+        if (dist(particles[i].x, particles[i].y, mouseX, mouseY) < drawingParams.connectionDistance + drawingParams.connectionDistance / 5) {
+            stroke(getColor());
+            strokeWeight(1);
+            line(particles[i].x, particles[i].y, mouseX, mouseY);
+        }
+    }
+}
 
+function generateParticleMeshConnections() {
+    for (let i = 0; i < drawingParams.particleAmount; i++) {
+        for (let j = 1; j < drawingParams.particleAmount; j++) {
+            stroke(getColor());
+            strokeWeight(1);
+            line(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+        }
+    }
+}
+
+function gradientLine(startX, startY, endX, endY) {
+    strokeWeight(1);
+    stroke(getColor());
+    beginShape(LINES);
+    let lineLength = dist(startX, startY, endX, endY);
+    let cosAlpha = abs(startX - endX) / lineLength;
+    let sinAlpha = abs(startY - endY) / lineLength;
+    for (let i = 0; i < lineLength; i++){
+        let brightnessStep = map(i, 0, lineLength, 0, 50);
+        stroke(getColor({brightness: safeHSBAShift("brightness", 100, brightnessStep * -1)}));
+        line(startX, startY, startX + cosAlpha, startY + sinAlpha);
+        startX = startX + cosAlpha;
+        startY = startY + sinAlpha;
+    }
+}
 
 /* ###########################################################################
 P5 Functions
 ############################################################################ */
 
 
-
 function setup() {
 
-  let canvas = createCanvas(canvasParams.w, canvasParams.h);
-  canvas.parent("canvas");
+    let canvas = createCanvas(canvasParams.w, canvasParams.h);
+    canvas.parent("canvas");
 
-  // Display & Render Options
-  frameRate(0.5);
-  angleMode(DEGREES);
-  smooth();
+    // Display & Render Options
+    colorMode(HSB, 360, 100, 100, 1);
+    angleMode(DEGREES);
+    smooth();
 
-  // GUI Management
-  if (canvasParams.gui) { 
-    let sketchGUI = createGui('Params');
-    sketchGUI.addObject(drawingParams);
-    noLoop();
-  }
+    // GUI Management
+    if (canvasParams.gui) {
+        let sketchGUI = createGui('Params');
+        sketchGUI.addObject(drawingParams);
+    }
 
-  // Anything else
-  fill(0, 150);
-  background(255);
-  noStroke();
+    // Anything else
+    background(0);
+    noStroke();
+    initializeParticles();
 }
-
-
 
 function draw() {
 
-  /* ----------------------------------------------------------------------- */
-  // Provide your Code below.
-  translate(width / 2, height / 2);
-  ellipse(-20, 0, 30);
-  ellipse(0, 0, 30);
-  ellipse(20, 0, 30);
+    if (drawingParams.sketchMode === "Swarm Connections") {
+        background(getColor({brightness: 0, alpha: 0.05}));
+    } else if (drawingParams.sketchMode === "Particle Net") {
+        background(getColor({brightness: 0, alpha: drawingParams.alphaValue}));
+    } else if (drawingParams.sketchMode === "Mesh") {
+        background(getColor({brightness: 0, alpha: 0.03}));
+    }
+
+    if (particles.length !== drawingParams.particleAmount) {
+        initializeParticles();
+    }
+
+    for (let i = 0; i < drawingParams.particleAmount; i++) {
+        if (particles[i] !== null) {
+            particles[i].movement();
+            particles[i].movement();
+        }
+    }
+
+    if (drawingParams.sketchMode === "Swarm Connections" || drawingParams.sketchMode === "Particle Net") {
+        checkParticleToParticleConnections();
+        checkMouseToParticleConnections();
+    } else if (drawingParams.sketchMode === "Mesh") {
+        generateParticleMeshConnections();
+    }
 
 
-
-  /* ----------------------------------------------------------------------- */
-  // Log globals
-  if (loggingParams) {
-    canvasParams.mouseX = mouseX;
-    canvasParams.mouseY = mouseY;
-    logInfo();
-  }
+    /* ----------------------------------------------------------------------- */
+    // Log globals
+    if (loggingParams) {
+        canvasParams.mouseX = mouseX;
+        canvasParams.mouseY = mouseY;
+        logInfo();
+    }
 }
-
-
-
-function keyPressed() {
-
-  if (keyCode === 81) { // Q-Key
-  }
-
-  if (keyCode === 87) { // W-Key
-  }
-
-  if (keyCode === 89) { // Y-Key
-  }
-
-  if (keyCode === 88) { // X-Key
-  }
-
-  if (keyCode === 83) { // S-Key
-    save(saveParams.sketchName + '.jpg');
-  }
-
-  if (keyCode === 49) { // 1-Key
-  }
-
-  if (keyCode === 50) { // 2-Key
-  }
-
-}
-
-
-
-function mousePressed() {}
-
-
-
-function mouseReleased() {}
-
-
-
-function mouseDragged() {}
-
-
-
-function keyReleased() {
-  if (keyCode == DELETE || keyCode == BACKSPACE) clear();
-}
-
-
-
-
-
-/* ###########################################################################
-Service Functions
-############################################################################ */
-
-
-
-function getCanvasHolderSize() {
-  canvasParams.w = canvasParams.holder.clientWidth;
-  canvasParams.h = canvasParams.holder.clientHeight;
-}
-
-
-
-function resizeMyCanvas() {
-  getCanvasHolderSize();
-  resizeCanvas(canvasParams.w, canvasParams.h);
-}
-
-
-
-function windowResized() {
-  resizeMyCanvas();
-}
-
-
-
-function logInfo(content) {
-
-  if (loggingParams.targetDrawingParams) {
-    loggingParams.targetDrawingParams.innerHTML = helperPrettifyLogs(drawingParams);
-  }
-
-  if (loggingParams.targetCanvasParams) {
-    loggingParams.targetCanvasParams.innerHTML = helperPrettifyLogs(canvasParams);
-  }
-
-}
-

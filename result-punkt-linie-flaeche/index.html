@@ -15,7 +15,7 @@ https://cnoss.github.io/generative-gestaltung/
 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Generative Gestaltung // Starter Code</title>
+  <title>Generative Gestaltung // Netzpartikel</title>
   <link rel="shortcut icon" type="image/x-icon" href="https://cnoss.github.io/generative-gestaltung/code/shared/img/favicon.ico">
 
   <!-- Normalize -->
@@ -39,30 +39,33 @@ https://cnoss.github.io/generative-gestaltung/
   <!-- 
     Available Canvas Modes: is-fixed, is-standard, is-fullscreen, is-16by9, is-small, is-large
   -->
-  <main id="canvas" class="is-fixed"></main>
+  <main id="canvas" class="is-large"></main>
   <aside id="console"></aside>
-  
+
   <!-- p5 & p5.dom -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+  <script src="../js/assets/libs/p5.js/p5.min.js"></script>
+  <script src="../js/assets/libs/p5.js/p5.dom.min.js"></script>
 
-  <!-- Audio Support -->
-  <!--script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.sound.min.js"></script-->
-
-  <!-- Handtrack.js -->
-  <!--canvas id="canvasHT"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/handtrackjs/dist/handtrack.min.js"> </script-->
-
-  <!-- Tramontana -->
-  <!--script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://pierdr.github.io/Tramontana-for-Javascript/lib/tramontana_min.js"></script-->
+  <!-- Open Type-->
+  <script src="../js/assets/libs/gg-dep-bundle.min.js"></script>
+  <script src="../js/assets/libs/opentype.min.js"></script>
 
   <!-- GUI -->
-  <script src="https://cnoss.github.io/generative-gestaltung/code/shared/libs/quicksettings.js"></script>
-  <script src="https://cnoss.github.io/generative-gestaltung/code/shared/libs/p5.gui.js"></script>
+  <script src="../js/assets/libs/quicksettings.min.js"></script>
+  <script src="../js/assets/libs/p5.js/p5.gui.min.js"></script>
+
+  <script src="../js/assets/libs/p5.svg.js"></script>
 
   <!-- Helper und Sketch -->
-  <script src="https://cnoss.github.io/generative-gestaltung/code/shared/js/helper.js"></script>
+  <script src="../js/assets/helper.js"></script>
+
+  <script src="../js/guiManipulation.js"></script>
+  <script src="../js/baseUiParams.js"></script>
+  <script src="../js/colorSetting.js"></script>
+  <script src="sketchUiParams.js"></script>
+  <script src="../js/baseService.js"></script>
+  <script src="../js/baseInteraction.js"></script>
+  <script src="particle.js"></script>
   <script src="sketch.js"></script>
 
 </body>
