@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------------
+    /* ----------------------------------------------------------------------------
 helper.js                                                                
 Enthält ein paar kleine Helferlein für die Sketches in Generative Gestaltung.
 Kurs «Generative Gestaltung» an der TH Köln
